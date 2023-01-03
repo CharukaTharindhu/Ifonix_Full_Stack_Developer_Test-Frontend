@@ -7,7 +7,9 @@ const layout = {
   wrapperCol: { span: 16 },
 };
 const  BASE_URL = "http://localhost:5000"
+
 /* eslint-disable no-template-curly-in-string */
+//set form validation with ant design
 const validateMessages = {
   required: '${label} is required!',
   types: {
@@ -61,8 +63,8 @@ const App: React.FC = () => {
     defaultValue: curruntUserEmail?.toString(),
   };
   useEffect(()=>{
-    
-    //get all data for admin
+    //when loging user, check is normal user or admin, then redirect considering role
+    //get all data for admin 
     if(isAdmin) {
       axios.get(BASE_URL+'/post').then((res)=>{
         setapprovedPost(res.data)
@@ -101,9 +103,9 @@ const App: React.FC = () => {
       setRejId(id);
   }
 
+  //Post submite
   const onFinish = (values: any) => {
     isLoading = true;
-    console.log(values.post.description);
     values.post.createdBy = curruntUserEmail;
     axios.post(BASE_URL+'/post',values.post).then((res)=>{
         if(res.data)
@@ -142,8 +144,10 @@ const App: React.FC = () => {
                localStorage.clear();
            }}>Logout</Button>
         </div>
+
+        {/* Create post for both Admin and nomal users*/}
         <div style={{marginLeft:"400px"}}>
-          <h1>Create Question</h1>
+          <h1>Product Forum</h1>
           {isLoading ? <Spin tip="Post Creating" size="small"><div className="content" /></Spin> : "" }
           <Card title="Product Forum" style={{ width: "70%" }}>
           <Form {...layout} name="nest-messages" onFinish={onFinish} validateMessages={validateMessages} >
@@ -163,23 +167,30 @@ const App: React.FC = () => {
               </Form.Item>
             </Form>
             </Card>
+
+           {/* If normal user Show all published post / If admin show all available post */}
             <h1>All Published Posts About Product</h1>
             <div>
+            
+            {/* search bar for find posts by user or text */}
             <Input.Group>
-            <Input style={{ width: 'calc(100% - 200px)' }} onChange={(e)=>{
-                console.log(e.target.value);
-                setSearchTxt(e.target.value);
-            }}/>
+              <Input style={{ width: 'calc(100% - 200px)' }} onChange={(e)=>{
+                  setSearchTxt(e.target.value);
+              }}/>
             <Button type="primary" onClick={()=>{
                 const a = approvedPost.filter(ab=>ab.createdBy === serachText)
                 setapprovedPost(a);
             }}>Search by user or text</Button>
-       </Input.Group>
+            </Input.Group>
+
+          {/* Desplay all approved post and searched posts */}
           <Card size="small" title="Available Posts"  style={{ width: 500 }}>
           {approvedPost.filter(post =>{
              return post.createdBy.includes(serachText) || post.description.includes(serachText)
           }).map((post) =>{
                   return(
+
+                    //Show who was comented for each post
                     <Card
                       style={{ marginTop: 16 }}
                       type="inner"
@@ -187,25 +198,28 @@ const App: React.FC = () => {
                       extra={<a onClick={()=>{
                         showModal(post._id);
                       }}>Comment</a>}
-                    >
+                     >
                       {post.description}
                       <div style={{marginTop:'5px'}}>
+                      
+                      {/* Is admin and not approved, he can approve each and evry post created by user*/}
                       {isAdmin && !post.IsAdminApproved ? <Button onClick={()=>{
                             post.IsAdminApproved = true;
                             axios.put(BASE_URL+'/post/'+post._id,post).then((res)=>{
-                                console.log(res.data)
                                 message.success("Approved by Admin")
                             }).catch((error)=>{
                               message.error("Try again")
-                            }).finally(()=>{
-                                
-                            })
+                            }).finally(()=>{})
                       }} type="primary">Approve</Button> : isAdmin ? <Tag color="green">Approved</Tag> : ""}
+
+                      {/* Is admin and approved, he can reject each and evry post created by user*/}
                       {isAdmin && !post.IsRejected ? <Button type="primary" danger onClick={()=>{
                               rejectModalOpen();
                               clickRecId(post._id);
                       }}>Reject</Button> : isAdmin ?<Tag color="green">rejected</Tag> : ""}
-                      {/* modal for reject message */}
+
+
+                    {/* when admin reject some post he need to add some reject feedback */}
                     <Modal title="Notice for rejection" open={isRejectedModal} onOk={closeModal}>
                       <Input.Group compact>
                           <Input onChange={(e)=>{
@@ -219,7 +233,6 @@ const App: React.FC = () => {
                                post.IsAdminApproved = false;
                                post.Rejectedfeedback = Rejectedfeedback
                                axios.put(BASE_URL+'/post/'+rejId,post).then((res)=>{
-                                  console.log(res.data)
                                   message.error("Rejected")
                                   closeModal();
                               }).catch((error)=>{
@@ -231,6 +244,8 @@ const App: React.FC = () => {
                           </Tooltip>
                       </Input.Group>
                     </Modal>
+
+                      {/* If need to delete approved post only post creater can remove it*/}
                       {post.IsAdminApproved && post.createdBy == curruntUserEmail  ? <Button type="primary" danger onClick={()=>{
                           axios.delete(BASE_URL+'/post/'+post._id).then((res)=>{
                               if(res.data._id){
@@ -238,6 +253,8 @@ const App: React.FC = () => {
                               }
                           }).catch((err)=>{console.log("error"); message.error("ERR")})
                       }}>Remove</Button> :""}
+
+                      {/* Each person can comment their post or other's post*/}
                       <Input.Group compact>
                           <Input onChange={(e)=>{
                               setDescription(e.target.value)

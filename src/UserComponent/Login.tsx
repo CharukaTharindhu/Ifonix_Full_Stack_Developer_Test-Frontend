@@ -3,6 +3,8 @@ import { Button, Form, Input,message,Checkbox } from 'antd';
 import axios from 'axios';
 const Login: React.FC = () => {
     const  BASE_URL = "http://localhost:5000"
+
+    //set State for identify login or register
     const [State,setState] = useState(0);
 
     const onFinish = (values: any) => {
@@ -29,7 +31,6 @@ const Login: React.FC = () => {
     };
   
     const onFinishFailed = (errorInfo: any) => {
-      console.log('Failed:', errorInfo);
     };
     return (
       <div>
@@ -46,6 +47,7 @@ const Login: React.FC = () => {
         onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
+  
         {State === 1 ? <Form.Item
           label="Username"
           name="username"
